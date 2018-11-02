@@ -14,6 +14,7 @@
   font-style: normal;
 }
 @font-face {
-  font-familiy: "Inconsolata";
-  src: url("fonts/Inconsolata/Inconsolata-Regular.ttf");
+  font-family: "Nunito";
+  src: url("fonts/Nunito/Nunito-Regular.ttf");
+  font-style: normal;
 }
