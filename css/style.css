@@ -677,7 +677,7 @@ article .different-posts {
 }
 article pre,
 article .highlight {
-  letter-spacing: 0.1em;
+  letter-spacing: 1px;
   background: #ebefef;
   padding: 15px;
   overflow: auto;
