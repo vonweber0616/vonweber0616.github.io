@@ -5,10 +5,10 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 	<meta name="theme-color" content="#33474d">
-	<title>Hexo</title>
+	<title>von Weber&#39;s Blog</title>
 	<link rel="stylesheet" href="/css/style.css">
 	
-      <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+      <link rel="alternate" href="/atom.xml" title="von Weber&#39;s Blog" type="application/atom+xml">
 	
 	
 	<script type="text/x-mathjax-config">
@@ -30,7 +30,7 @@
 				<a href="/atom.xml" class="header__link">RSS</a>
 			
 		</nav>
-		<h1 class="header__title"><a href="/">Hexo</a></h1>
+		<h1 class="header__title"><a href="/">von Weber&#39;s Blog</a></h1>
 		<h2 class="header__subtitle"></h2>
 	</header>
 
@@ -41,11 +41,15 @@
 
 	<article>
 	
-		<h1><a href="/2018/11/02/Hexo测试/">Hexo测试@屁屁</a></h1>
+		<h1><a href="/2018/11/02/Hexo测试/">Hexo Blog Test</a></h1>
 	
 	<div class="article__infos">
 		<span class="article__date">2018-11-02</span><br>
 		
+		
+			<span class="article__tags">
+			  	<a class="article__tag-link" href="/tags/test/">test</a>
+			</span>
 		
 	</div>
 
@@ -53,9 +57,9 @@
 
 	
 		<h2 id="2级标题"><a href="#2级标题" class="headerlink" title="2级标题"></a>2级标题</h2><h3 id="3级标题"><a href="#3级标题" class="headerlink" title="3级标题"></a>3级标题</h3><p>正文，字体。</p>
-<p>代码样式<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">float</span> <span class="title">vsum</span><span class="params">(<span class="keyword">float</span> *v, <span class="keyword">int</span> n)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">float</span> s = <span class="number">0.0</span>; <span class="keyword">int</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">0</span>; i&lt;n; i++)</span><br><span class="line">    s += v[i];</span><br><span class="line">    <span class="keyword">return</span> s;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>MathJax test.<br>When \(a \ne 0\), there are two solutions to $ax^2 + bx + c = 0$ and they are<br>inline symbols, $\LaTeX \and \alpha$ and<br>  $$x = {-b \pm \sqrt{b^2-4ac} \over 2a}.$$</p>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">type</span>=<span class="string">"text/x-mathjax-config"</span>&gt;</span><span class="undefined"></span></span><br><span class="line"><span class="undefined">  MathJax.Hub.Config(&#123;tex2jax: &#123;inlineMath: [['$','$'], ['\\(','\\)']]&#125;&#125;);</span></span><br><span class="line"><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML'</span> <span class="attr">async</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>代码样式，引用<code>vmulpd</code>和<code>指令集</code>。<br><figure class="highlight c"><figcaption><span>vsum.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">float</span> <span class="title">vsum</span><span class="params">(<span class="keyword">float</span> *v, <span class="keyword">int</span> n)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">float</span> s = <span class="number">0.0</span>; <span class="keyword">int</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">0</span>; i&lt;n; i++)</span><br><span class="line">    s += v[i];</span><br><span class="line">    <span class="keyword">return</span> s;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>MathJax test.<br>When \(a \ne 0\), there are two solutions to $ax^2 + bx + c = 0$ and they are<br>inline symbols, $\LaTeX \And \alpha$ and<br>  $$x = {-b \pm \sqrt{b^2-4ac} \over 2a}.$$</p>
+<figure class="highlight html"><figcaption><span>add MathJax support</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">type</span>=<span class="string">"text/x-mathjax-config"</span>&gt;</span><span class="undefined"></span></span><br><span class="line"><span class="undefined">  MathJax.Hub.Config(&#123;tex2jax: &#123;inlineMath: [['$','$'], ['\\(','\\)']]&#125;&#125;);</span></span><br><span class="line"><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">'https://cdnjs.cloudflare.com/ajax/libs/</span></span></span><br><span class="line"><span class="tag"><span class="string">mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML'</span> <span class="attr">async</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
 
 	
 
@@ -129,7 +133,7 @@
 	    
 
 		<div class="footer-credit">
-			<span>© 2018 John Doe | Powered by <a href="https://hexo.io/">Hexo</a> | Theme <a href="https://github.com/HoverBaum/meilidu-hexo">MeiliDu</a></span>
+			<span>© 2018 von Weber | Powered by <a href="https://hexo.io/">Hexo</a> | Theme <a href="https://github.com/HoverBaum/meilidu-hexo">MeiliDu</a></span>
 		</div>
 
 	</div>
