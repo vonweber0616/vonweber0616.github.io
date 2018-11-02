@@ -20,6 +20,7 @@
 }
 article pre,
 article .highlight {
+  letter-spacing: 0.1em;
   background: #ebefef;
   padding: 15px;
   overflow: auto;
@@ -84,7 +85,6 @@ article code {
   background: color-background;
   text-shadow: 0 1px #fff;
   padding: 0 0.3em;
-  letter-spacing: 0.1em;
 }
 article pre code {
   background: none;
