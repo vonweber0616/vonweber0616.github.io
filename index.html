@@ -74,26 +74,158 @@
 <h2 id="SIMD和AVX2简介"><a href="#SIMD和AVX2简介" class="headerlink" title="SIMD和AVX2简介"></a>SIMD和AVX2简介</h2><p>SIMD (<strong>s</strong>ingle <strong>i</strong>nstrucion <strong>m</strong>ultiple <strong>d</strong>ata)单指令多数据是用来对多个数据执行单个指令（算术或逻辑）的向量化方法，是X86-64(AMD64)指令集的拓展。由最早的SSE（SSE有多个改进版本，最后的SSE版本是SSE4.2），到后来的AVX，AVX2，最新的是AVX512，由于AVX512在较新和高端的CPU才支持，相较而言，更多的CPU支持AVX2。</p>
 <p>AVX2指令集配合16个256位ymm寄存器（低128位为xmm寄存器），可以存储8个4字节(float, int)或4个8字节(double, long)数据，并在一个指令内同时做8个或4个运算。</p>
 <h2 id="Naive-Solution"><a href="#Naive-Solution" class="headerlink" title="Naive Solution"></a>Naive Solution</h2><p>现在来考虑一个任务，将长度均为<code>N = 100000</code>的float数组<code>a, b, c</code>做运算<code>(a + b) * c</code>，存放在数组c中。将这个操作重复<code>NTIME = 50000</code>次，记录消耗的时间。</p>
-<p>由于这个任务作为编程问题是如此的简单和直接，我们很快写出c程序如<code>code 0: simd0.c</code>，并觉得毫无优化的余地，因为仅有三行代码没有任何多余的操作，只有17,19,20三行代码是在完成任务。其中的变量<code>sum</code>仅仅是用来防止编译器的自动优化会直接去掉重复50000次这个重复，虽然这个优化很厉害，但是偏离了我们的原意。</p>
-<p>使用命令<code>gcc simd0.c -o simd0.exe</code>编译，运行时间为<code>13s 803ms 846μs</code>，取5次计算的中位数，下同。如果我们满足于这个结果，觉得已经很快了，那生活也就没有乐趣了。</p>
-<figure class="highlight c"><figcaption><span>code 0: simd0.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N 100000</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> NTIMES 50000</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">float</span> a[N], b[N], c[N], r[N];</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i, times, sum;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">starttime</span>, <span class="title">endtime</span>;</span></span><br><span class="line">    <span class="keyword">long</span> s, ms, us, timeuse;</span><br><span class="line">    gettimeofday(&amp;starttime, <span class="number">0</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* workhorse code  */</span></span><br><span class="line">    <span class="keyword">for</span> (times = <span class="number">0</span>; times &lt; NTIMES; times++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; N; ++i)</span><br><span class="line">            r[i] = (a[i] + b[i]) * c[i];</span><br><span class="line">        sum += sum;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* elapsed time  */</span></span><br><span class="line">    gettimeofday(&amp;endtime, <span class="number">0</span>);</span><br><span class="line">    timeuse = <span class="number">1000000</span> * (endtime.tv_sec - starttime.tv_sec) + </span><br><span class="line">            endtime.tv_usec - starttime.tv_usec;</span><br><span class="line">    s = timeuse / <span class="number">1000000</span>;</span><br><span class="line">    ms = timeuse / <span class="number">1000</span> % <span class="number">1000</span>;</span><br><span class="line">    us = timeuse % <span class="number">1000</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"%ld s %ld ms %ld us\n"</span>, s, ms, us);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> sum;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="GCC自动优化"><a href="#GCC自动优化" class="headerlink" title="GCC自动优化"></a>GCC自动优化</h2><p>我们可以用命令<code>gcc -S -o simd0.s simd0.c</code>生成上述程序<code>simd0.exe</code>的汇编代码，看看哪里可以优化，其实这个汇编的蠢不在于没有用SIMD指令，主要问题是有太多的访问内存指令，代码没有贴出来。</p>
-<p>如果我们使用<code>-O1</code>参数进行优化，即<code>gcc -O1 -o simd0-O1.exe simd0.c</code>，消耗的时间下降为<code>3s 841ms 346μs</code>。汇编代码如<code>code 1: simd0-O1.s</code>, 其中略去了计时，打印和某些伪指令，下同。<br><figure class="highlight x86asm"><figcaption><span>code 1: simd0-O1.s</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">main:</span></span><br><span class="line">  movl <span class="number">$50000</span>, %edx</span><br><span class="line">  <span class="keyword">jmp</span> .L2</span><br><span class="line"><span class="symbol">.L6:</span></span><br><span class="line">  <span class="keyword">addss</span> %xmm1, %xmm1</span><br><span class="line">  subl <span class="number">$1</span>, %edx</span><br><span class="line">  <span class="keyword">je</span> .L4</span><br><span class="line"><span class="symbol">.L2:</span></span><br><span class="line">  movl <span class="number">$0</span>, %eax</span><br><span class="line"><span class="symbol">.L3:</span></span><br><span class="line">  <span class="keyword">movss</span> a(%rax), %xmm0</span><br><span class="line">  <span class="keyword">addss</span> b(%rax), %xmm0</span><br><span class="line">  <span class="keyword">mulss</span> c(%rax), %xmm0</span><br><span class="line">  <span class="keyword">movss</span> %xmm0, r(%rax)</span><br><span class="line">  addq <span class="number">$4</span>, %rax</span><br><span class="line">  cmpq <span class="number">$400000</span>, %rax</span><br><span class="line">  <span class="keyword">jne</span> .L3</span><br><span class="line">  <span class="keyword">jmp</span> .L6</span><br><span class="line"><span class="symbol">.L4:</span></span><br><span class="line">  <span class="keyword">cvttss2si</span> %xmm1, %eax</span><br><span class="line">  <span class="keyword">ret</span></span><br></pre></td></tr></table></figure></p>
-<p><code>simd0-O1.s</code>的代码和不使用优化的代码相比，主要改进是从内存中取一个数比如<code>a[i]</code>，只需要一次访存，因为指标<code>i</code>存在寄存器<code>%rax</code>中，这一个改进大幅降低了访问指标<code>i</code>和数组元素<code>a[i]</code>和其他数组的时间。<code>simd0-O1.s</code>的代码非常符合我们思维，它使用<code>movss</code>从内存中取一个单精度数，使用<code>addss</code>和<code>mulss</code>执行单精度浮点数的加法和乘法。执行一遍计算后再做第二遍。</p>
+<p>由于这个任务作为编程问题是如此的简单和直接，我们很快写出c程序如<code>code 0: simd0.c</code>，并觉得毫无优化的余地，因为仅有三行代码没有任何多余的操作，只有17,19,20三行代码是在完成任务。其中的变量<code>sum</code>仅仅是用来防止编译器的自动优化会直接去掉重复50000次这个步骤，虽然这个优化很厉害，但是偏离了我们的原意。</p>
+<p>使用命令<code>gcc simd0.c -o simd0.exe</code>编译，运行时间为<code>13s 803ms 846μs</code>，取5次计算的中位数，下同。如果我们满足于这个结果，觉得已经很快了，那生活也就没有了乐趣。</p>
+<p><code>`</code>c code 0: simd0.c</p>
+<p>#include &lt;sys/time.h&gt;</p>
+<p>#include &lt;stdio.h&gt;</p>
+<p>#define N 100000</p>
+<p>#define NTIMES 50000</p>
+<p>float a[N], b[N], c[N], r[N];</p>
+<p>int main(void)<br>{<br>    int i, times, sum;<br>    struct timeval starttime, endtime;<br>    long s, ms, us, timeuse;<br>    gettimeofday(&amp;starttime, 0);</p>
+<pre><code>/* workhorse code  */
+for (times = 0; times &lt; NTIMES; times++)
+{
+    for (i = 0; i &lt; N; ++i)
+        r[i] = (a[i] + b[i]) * c[i];
+    sum += sum;
+}
+
+/* elapsed time  */
+gettimeofday(&amp;endtime, 0);
+timeuse = 1000000 * (endtime.tv_sec - starttime.tv_sec) + 
+        endtime.tv_usec - starttime.tv_usec;
+s = timeuse / 1000000;
+ms = timeuse / 1000 % 1000;
+us = timeuse % 1000;
+printf(&quot;%ld s %ld ms %ld us\n&quot;, s, ms, us);
+
+return sum;
+</code></pre><p>}</p>
+<pre><code>## GCC自动优化
+我们可以用命令`gcc -S -o simd0.s simd0.c`生成上述程序`simd0.exe`的汇编代码，看看哪里可以优化，其实这个汇编的蠢不在于没有用SIMD指令，主要问题是有太多的访问内存指令，代码没有贴出来。
+
+如果我们使用`-O1`参数进行优化，即`gcc -O1 -o simd0-O1.exe simd0.c`，消耗的时间下降为`3s 841ms 346μs`。汇编代码如`code 1: simd0-O1.s`, 其中略去了计时，打印和某些伪指令，下同。
+```x86asm code 1: simd0-O1.s
+main:
+  movl $50000, %edx
+  jmp .L2
+.L6:
+  addss %xmm1, %xmm1
+  subl $1, %edx
+  je .L4
+.L2:
+  movl $0, %eax
+.L3:
+  movss a(%rax), %xmm0
+  addss b(%rax), %xmm0
+  mulss c(%rax), %xmm0
+  movss %xmm0, r(%rax)
+  addq $4, %rax
+  cmpq $400000, %rax
+  jne .L3
+  jmp .L6
+.L4:
+  cvttss2si %xmm1, %eax
+  ret
+</code></pre><p><code>simd0-O1.s</code>的代码和不使用优化的代码相比，主要改进是从内存中取一个数比如<code>a[i]</code>，只需要一次访存，因为指标<code>i</code>存在寄存器<code>%rax</code>中，这一个改进大幅降低了访问指标<code>i</code>和数组元素<code>a[i]</code>和其他数组的时间。<code>simd0-O1.s</code>的代码非常符合我们思维，它使用<code>movss</code>从内存中取一个单精度数，使用<code>addss</code>和<code>mulss</code>执行单精度浮点数的加法和乘法。执行一遍计算后再做第二遍。</p>
 <p>使用<code>-O2</code>优化和<code>-O1</code>对这个程序没有太大差异，我们略去。</p>
-<h2 id="SIMD的第一尝试"><a href="#SIMD的第一尝试" class="headerlink" title="SIMD的第一尝试"></a>SIMD的第一尝试</h2><p>如果我们使用<code>-O3</code>级别优化，就会放发生某些不一样的事情，汇编代码见<code>code 2: simd0-O3.s</code><br><figure class="highlight x86asm"><figcaption><span>code 2: simd0-O3.s</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">main:</span></span><br><span class="line">  movl <span class="number">$50000</span>, %edx</span><br><span class="line"><span class="symbol">.L2:</span></span><br><span class="line">  xorl %eax, %eax</span><br><span class="line"><span class="symbol">.L3:</span></span><br><span class="line">  <span class="keyword">movaps</span> b(%rax), %xmm0</span><br><span class="line">  <span class="keyword">addps</span> a(%rax), %xmm0</span><br><span class="line">  addq <span class="number">$16</span>, %rax</span><br><span class="line">  <span class="keyword">mulps</span> c-<span class="number">16</span>(%rax), %xmm0</span><br><span class="line">  <span class="keyword">movaps</span> %xmm0, r-<span class="number">16</span>(%rax)</span><br><span class="line">  cmpq <span class="number">$400000</span>, %rax</span><br><span class="line">  <span class="keyword">jne</span> .L3</span><br><span class="line">  <span class="keyword">addss</span> %xmm1, %xmm1</span><br><span class="line">  subl <span class="number">$1</span>, %edx</span><br><span class="line">  <span class="keyword">jne</span> .L2</span><br><span class="line">  <span class="keyword">cvttss2si</span> %xmm1, %eax</span><br><span class="line">  <span class="keyword">ret</span></span><br></pre></td></tr></table></figure></p>
-<p>和<code>code 1: simd0-O2.s</code>相比，<code>code 2: simd0-O3.s</code>代码启用了SSE指令集的SIMD指令，它使用完整的<code>xmm</code>寄存器，而不是低32位，进行浮点数的加法和乘法。其中，<code>movaps</code>从内存中取4个单精度浮点数放在<code>xmm</code>寄存器中，或者相反方向，<code>addps</code>和<code>mulps</code>分别对<code>xmm</code>寄存器中的4个单精度数据做加法和乘法。使用SSE指令，运行时间又降为<code>2s 612ms 38μs</code>。</p>
-<h2 id="AVX2上场"><a href="#AVX2上场" class="headerlink" title="AVX2上场"></a>AVX2上场</h2><p>虽然我们仍然可以使用参数让编译器自动向量化，比如<code>gcc -O3 -maxv2 -o simd1-avx2-O3.exe simd1.c</code>，但是这样的优化结果是不可预测的，因此在编程的时候使用适当的机制或约定引导编译器进行向量化，是更加稳健的方法。</p>
-<h3 id="内存对齐"><a href="#内存对齐" class="headerlink" title="内存对齐"></a>内存对齐</h3><p>将变量的存储地址对齐到8/16/32/64等整数的倍数，是某些指令的要求，同时可以使寻址更加有效。在GCC环境下，使用<code>__attribute__((aligned(__BIGGEST_ALIGNMENT__)))</code>修饰符引导编译器进行内存对齐。比如声明长度为N的float数组，对齐到64字节<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">float</span> a[N] __attribute__((aligned(<span class="number">64</span>)));</span><br></pre></td></tr></table></figure></p>
-<h3 id="向量数据类型"><a href="#向量数据类型" class="headerlink" title="向量数据类型"></a>向量数据类型</h3><p>在GCC环境下，可以声明基本数据类型<code>char int float double long</code>的数组作为向量，来引导编译器使用SIMD指令编译，比如下面的代码声明了一种8个float长的向量类型<code>v8f</code>，<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">float</span> v8f __attribute__((vector_size(<span class="number">32</span>)));</span><br></pre></td></tr></table></figure></p>
+<h2 id="SIMD的第一尝试"><a href="#SIMD的第一尝试" class="headerlink" title="SIMD的第一尝试"></a>SIMD的第一尝试</h2><p>如果我们使用<code>-O3</code>级别优化，就会放发生某些不一样的事情，汇编代码见<code>code 2: simd0-O3.s</code><br><code>`</code>x86asm code 2: simd0-O3.s<br>main:<br>  movl $50000, %edx<br>.L2:<br>  xorl %eax, %eax<br>.L3:<br>  movaps b(%rax), %xmm0<br>  addps a(%rax), %xmm0<br>  addq $16, %rax<br>  mulps c-16(%rax), %xmm0<br>  movaps %xmm0, r-16(%rax)<br>  cmpq $400000, %rax<br>  jne .L3<br>  addss %xmm1, %xmm1<br>  subl $1, %edx<br>  jne .L2<br>  cvttss2si %xmm1, %eax<br>  ret</p>
+<pre><code>和`code 1: simd0-O2.s`相比，`code 2: simd0-O3.s`代码启用了SSE指令集的SIMD指令，它使用完整的`xmm`寄存器，而不是低32位，进行浮点数的加法和乘法。其中，`movaps`从内存中取4个单精度浮点数放在`xmm`寄存器中，或者相反方向，`addps`和`mulps`分别对`xmm`寄存器中的4个单精度数据做加法和乘法。使用SSE指令，运行时间又降为`2s 612ms 38μs`。
+
+## AVX2上场
+虽然我们仍然可以使用参数让编译器自动向量化，比如`gcc -O3 -maxv2 -o simd1-avx2-O3.exe simd1.c`，但是这样的优化结果是不可预测的，因此在编程的时候使用适当的机制或约定引导编译器进行向量化，是更加稳健的方法。
+
+### 内存对齐
+将变量的存储地址对齐到8/16/32/64等整数的倍数，是某些指令的要求，同时可以使寻址更加有效。在GCC环境下，使用`__attribute__((aligned(__BIGGEST_ALIGNMENT__)))`修饰符引导编译器进行内存对齐。比如声明长度为N的float数组，对齐到64字节
+```c 
+float a[N] __attribute__((aligned(64)));
+</code></pre><h3 id="向量数据类型"><a href="#向量数据类型" class="headerlink" title="向量数据类型"></a>向量数据类型</h3><p>在GCC环境下，可以声明基本数据类型<code>char int float double long</code>的数组作为向量，来引导编译器使用SIMD指令编译，比如下面的代码声明了一种8个float长的向量类型<code>v8f</code>，</p>
+<pre><code class="c">typedef float v8f __attribute__((vector_size(32)));
+</code></pre>
 <p>向量数据类型可以使用运算符<code>+ - * / &amp; ^ | %</code>等进行逐元素运算，他们会被编译成相应的SIMD指令。</p>
-<p>现在我们可以利用上面的技巧，来重写程序，确保我们使用了SIMD指令，见<code>code 3: simd1.c</code><br><figure class="highlight c"><figcaption><span>code 3: simd1.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N 100000</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> NTIMES 50000</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> ALIGN 64</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">float</span> v8f __attribute__((vector_size(<span class="number">32</span>)));</span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> VLEN (sizeof(v8f) / sizeof(float))</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">float</span> a[N] __attribute__((aligned(ALIGN)));</span><br><span class="line"><span class="keyword">float</span> b[N] __attribute__((aligned(ALIGN)));</span><br><span class="line"><span class="keyword">float</span> c[N] __attribute__((aligned(ALIGN)));</span><br><span class="line"><span class="keyword">float</span> r[N] __attribute__((aligned(ALIGN)));</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    v8f *va, *vb, *vc, *vr;</span><br><span class="line">    <span class="keyword">int</span> i, times, sum;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">timeval</span> <span class="title">starttime</span>, <span class="title">endtime</span>;</span></span><br><span class="line">    <span class="keyword">long</span> s, ms, us, timeuse;</span><br><span class="line">    gettimeofday(&amp;starttime, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* workhorse code  */</span></span><br><span class="line">    <span class="keyword">for</span> (times = <span class="number">0</span>; times &lt; NTIMES; times++)</span><br><span class="line">    &#123;</span><br><span class="line">        va = (v8f *)a;</span><br><span class="line">        vb = (v8f *)b;</span><br><span class="line">        vc = (v8f *)c;</span><br><span class="line">        vr = (v8f *)r;</span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; N; i += VLEN)&#123;</span><br><span class="line">            *vr = (*va + *vb) * (*vc);</span><br><span class="line">            va++, vb++, vc++, vr++;</span><br><span class="line">        &#125;</span><br><span class="line">        sum += sum;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/* elapsed time  */</span></span><br><span class="line">    gettimeofday(&amp;endtime, <span class="number">0</span>);</span><br><span class="line">    timeuse = <span class="number">1000000</span> * (endtime.tv_sec - starttime.tv_sec) + </span><br><span class="line">    endtime.tv_usec - starttime.tv_usec;</span><br><span class="line">    s = timeuse / <span class="number">1000000</span>;</span><br><span class="line">    ms = timeuse / <span class="number">1000</span> % <span class="number">1000</span>;</span><br><span class="line">    us = timeuse % <span class="number">1000</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"%ld s %ld ms %ld us\n"</span>, s, ms, us);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> sum;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>上面的程序使用指向向量数据类型<code>v8f</code>的指针来进行运算，这些操作可以很好的编译成SIMD指令。并且由于向量长度是8的整数倍，所以我们不用额外的操作。使用命令<code>gcc -mavx2 -O3 -S -o simd1-O3.s simd1.c</code>编译，得到和我们预想一样的汇编代码<br><figure class="highlight x86asm"><figcaption><span>code 4: simd1-O3.s</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">main:</span></span><br><span class="line">  xorl %eax, %eax</span><br><span class="line">  movl <span class="number">$50000</span>, %ecx</span><br><span class="line"><span class="symbol">.L3:</span></span><br><span class="line">  xorl %edx, %edx</span><br><span class="line"><span class="symbol">.L2:</span></span><br><span class="line">  <span class="keyword">vmovaps</span> a(%rdx), %ymm1</span><br><span class="line">  <span class="keyword">vaddps</span> b(%rdx), %ymm1, %ymm0</span><br><span class="line">  addq <span class="number">$32</span>, %rdx</span><br><span class="line">  <span class="keyword">vmulps</span> c-<span class="number">32</span>(%rdx), %ymm0, %ymm0</span><br><span class="line">  <span class="keyword">vmovaps</span> %ymm0, r-<span class="number">32</span>(%rdx)</span><br><span class="line">  cmpq <span class="number">$400000</span>, %rdx</span><br><span class="line">  <span class="keyword">jne</span> .L2</span><br><span class="line">  addl %eax, %eax</span><br><span class="line">  subl <span class="number">$1</span>, %ecx</span><br><span class="line">  <span class="keyword">jne</span> .L3</span><br><span class="line">  <span class="keyword">vzeroupper</span></span><br><span class="line">  <span class="keyword">ret</span></span><br></pre></td></tr></table></figure></p>
-<p>和<code>code 2: simd0-O3.s</code>不同的是，这里使用指令<code>vmovaps vaddps vmulps</code>对8个（组）float数据进行操作。虽然我们一顿操作，但是效率提升并不明显，原因是因为这个例子中，最费时的是内存的读写而不是计算加法和乘法。</p>
-<p>我们换一个顺序，对于某个i，我们重复<code>NTIMES</code>次<code>r[i] = (a[i] + b[i]) * c[i]</code>操作，然后在进行下一个i，由于编译器优化总是会去掉一层循环，所以我们直接修改汇编代码如下<br><figure class="highlight x86asm"><figcaption><span>code 5: simd2-0.s</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">main:</span></span><br><span class="line"><span class="symbol">.L2:</span></span><br><span class="line">    movl	<span class="number">$50000</span>, %eax</span><br><span class="line"><span class="symbol">.L3:</span></span><br><span class="line">    <span class="keyword">vmovaps</span>	a(%rdx), %ymm1</span><br><span class="line">    <span class="keyword">vaddps</span>	b(%rdx), %ymm1, %ymm0</span><br><span class="line">    <span class="keyword">vmulps</span>	c(%rdx), %ymm0, %ymm0</span><br><span class="line"><span class="meta">    .p2align</span> <span class="number">4</span>,,<span class="number">10</span></span><br><span class="line">    addl	%ebx, %ebx</span><br><span class="line">    <span class="keyword">vmovaps</span>	%ymm0, r(%rdx)</span><br><span class="line">    subl	<span class="number">$1</span>, %eax</span><br><span class="line">    <span class="keyword">jne</span>	.L3</span><br><span class="line">    addq	<span class="number">$32</span>, %rdx</span><br><span class="line">    cmpq	<span class="number">$400000</span>, %rdx</span><br><span class="line">    <span class="keyword">jne</span>	.L2</span><br><span class="line">    xorl	%edx, %edx</span><br><span class="line">    <span class="keyword">vzeroupper</span></span><br><span class="line">    <span class="keyword">ret</span></span><br></pre></td></tr></table></figure></p>
-<p>用命令<code>gcc -o simd2-0.exe simd2-0.s</code>将汇编指令链接成二进制程序。虽然只是调换了两个循环的顺序，操作也没有少一个，但是由于L1/2/3 cache的存在，<code>code 5</code>a显著降低了访问内存的次数，执行时间仅为<code>0s 634ms 562μs</code>，验证了我们上面关于效率瓶颈的论断。</p>
-<p>如果我们显式地先读一次数据到寄存器中，做<code>NTIMES</code>次计算，最后再写到内存中，这样就避免了多次读写内存的操作。汇编代码如下<br><figure class="highlight x86asm"><figcaption><span>code 6: simd2-1.s</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">main:</span></span><br><span class="line"><span class="symbol">.L2:</span></span><br><span class="line">    movl	<span class="number">$50000</span>, %eax</span><br><span class="line">    <span class="keyword">vmovaps</span>	a(%rdx), %ymm1</span><br><span class="line">    <span class="keyword">vmovaps</span>	b(%rdx), %ymm2</span><br><span class="line">    <span class="keyword">vmovaps</span>	c(%rdx), %ymm3</span><br><span class="line"><span class="symbol">.L3:</span></span><br><span class="line">    <span class="keyword">vaddps</span>	%ymm2, %ymm1, %ymm0</span><br><span class="line">    <span class="keyword">vmulps</span>	%ymm3, %ymm0, %ymm0</span><br><span class="line"><span class="meta">    .p2align</span> <span class="number">4</span>,,<span class="number">10</span></span><br><span class="line">    addl	%ebx, %ebx</span><br><span class="line">    <span class="keyword">vmovaps</span>	%ymm0, r(%rdx)</span><br><span class="line">    subl	<span class="number">$1</span>, %eax</span><br><span class="line">    <span class="keyword">jne</span>	.L3</span><br><span class="line">    addq	<span class="number">$32</span>, %rdx</span><br><span class="line">    cmpq	<span class="number">$400000</span>, %rdx</span><br><span class="line">    <span class="keyword">jne</span>	.L2</span><br><span class="line">    xorl	%edx, %edx</span><br><span class="line">    <span class="keyword">vzeroupper</span></span><br><span class="line">    <span class="keyword">ret</span></span><br></pre></td></tr></table></figure></p>
-<p>最后优化的程序执行时间为<code>0s 324ms 504μs</code>。和最初的13.8s相比，这个速度快了40多倍，虽然主要功劳并不归功于SIMD指令，但是合理的SIMD向量化有助于我们减少内存的访问，从而为程序加速。</p>
+<p>现在我们可以利用上面的技巧，来重写程序，确保我们使用了SIMD指令，见<code>code 3: simd1.c</code><br><code>`</code>c code 3: simd1.c</p>
+<p>#include &lt;sys/time.h&gt;</p>
+<p>#include &lt;stdio.h&gt;</p>
+<p>#define N 100000</p>
+<p>#define NTIMES 50000</p>
+<p>#define ALIGN 64<br>typedef float v8f <strong>attribute</strong>((vector_size(32)));</p>
+<p>#define VLEN (sizeof(v8f) / sizeof(float))</p>
+<p>float a[N] <strong>attribute</strong>((aligned(ALIGN)));<br>float b[N] <strong>attribute</strong>((aligned(ALIGN)));<br>float c[N] <strong>attribute</strong>((aligned(ALIGN)));<br>float r[N] <strong>attribute</strong>((aligned(ALIGN)));</p>
+<p>int main(void)<br>{<br>    v8f <em>va, </em>vb, <em>vc, </em>vr;<br>    int i, times, sum;<br>    struct timeval starttime, endtime;<br>    long s, ms, us, timeuse;<br>    gettimeofday(&amp;starttime, 0);</p>
+<pre><code>/* workhorse code  */
+for (times = 0; times &lt; NTIMES; times++)
+{
+    va = (v8f *)a;
+    vb = (v8f *)b;
+    vc = (v8f *)c;
+    vr = (v8f *)r;
+    for (i = 0; i &lt; N; i += VLEN){
+        *vr = (*va + *vb) * (*vc);
+        va++, vb++, vc++, vr++;
+    }
+    sum += sum;
+}
+
+/* elapsed time  */
+gettimeofday(&amp;endtime, 0);
+timeuse = 1000000 * (endtime.tv_sec - starttime.tv_sec) + 
+endtime.tv_usec - starttime.tv_usec;
+s = timeuse / 1000000;
+ms = timeuse / 1000 % 1000;
+us = timeuse % 1000;
+printf(&quot;%ld s %ld ms %ld us\n&quot;, s, ms, us);
+
+return sum;
+</code></pre><p>}</p>
+<pre><code>上面的程序使用指向向量数据类型`v8f`的指针来进行运算，这些操作可以很好的编译成SIMD指令。并且由于向量长度是8的整数倍，所以我们不用额外的操作。使用命令`gcc -mavx2 -O3 -S -o simd1-O3.s simd1.c`编译，得到和我们预想一样的汇编代码
+```x86asm code 4: simd1-O3.s
+main:
+  xorl %eax, %eax
+  movl $50000, %ecx
+.L3:
+  xorl %edx, %edx
+.L2:
+  vmovaps a(%rdx), %ymm1
+  vaddps b(%rdx), %ymm1, %ymm0
+  addq $32, %rdx
+  vmulps c-32(%rdx), %ymm0, %ymm0
+  vmovaps %ymm0, r-32(%rdx)
+  cmpq $400000, %rdx
+  jne .L2
+  addl %eax, %eax
+  subl $1, %ecx
+  jne .L3
+  vzeroupper
+  ret
+</code></pre><p>和<code>code 2: simd0-O3.s</code>不同的是，这里使用指令<code>vmovaps vaddps vmulps</code>对8个（组）float数据进行操作。虽然我们一顿操作，但是效率提升并不明显，原因是因为这个例子中，最费时的是内存的读写而不是计算加法和乘法。</p>
+<p>我们换一个顺序，对于某个i，我们重复<code>NTIMES</code>次<code>r[i] = (a[i] + b[i]) * c[i]</code>操作，然后在进行下一个i，由于编译器优化总是会去掉一层循环，所以我们直接修改汇编代码如下<br><code>`</code>x86asm code 5: simd2-0.s<br>main:<br>.L2:<br>    movl    $50000, %eax<br>.L3:<br>    vmovaps    a(%rdx), %ymm1<br>    vaddps    b(%rdx), %ymm1, %ymm0<br>    vmulps    c(%rdx), %ymm0, %ymm0<br>    .p2align 4,,10<br>    addl    %ebx, %ebx<br>    vmovaps    %ymm0, r(%rdx)<br>    subl    $1, %eax<br>    jne    .L3<br>    addq    $32, %rdx<br>    cmpq    $400000, %rdx<br>    jne    .L2<br>    xorl    %edx, %edx<br>    vzeroupper<br>    ret</p>
+<pre><code>
+用命令`gcc -o simd2-0.exe simd2-0.s`将汇编指令链接成二进制程序。虽然只是调换了两个循环的顺序，操作也没有少一个，但是由于L1/2/3 cache的存在，`code 5`a显著降低了访问内存的次数，执行时间仅为`0s 634ms 562μs`，验证了我们上面关于效率瓶颈的论断。
+
+如果我们显式地先读一次数据到寄存器中，做`NTIMES`次计算，最后再写到内存中，这样就避免了多次读写内存的操作。汇编代码如下
+```x86asm code 6: simd2-1.s
+main:
+.L2:
+    movl    $50000, %eax
+    vmovaps    a(%rdx), %ymm1
+    vmovaps    b(%rdx), %ymm2
+    vmovaps    c(%rdx), %ymm3
+.L3:
+    vaddps    %ymm2, %ymm1, %ymm0
+    vmulps    %ymm3, %ymm0, %ymm0
+    .p2align 4,,10
+    addl    %ebx, %ebx
+    vmovaps    %ymm0, r(%rdx)
+    subl    $1, %eax
+    jne    .L3
+    addq    $32, %rdx
+    cmpq    $400000, %rdx
+    jne    .L2
+    xorl    %edx, %edx
+    vzeroupper
+    ret
+</code></pre><p>最后优化的程序执行时间为<code>0s 324ms 504μs</code>。和最初的13.8s相比，这个速度快了40多倍，虽然主要功劳并不归功于SIMD指令，但是合理的SIMD向量化有助于我们减少内存的访问，从而为程序加速。</p>
 
 	
 
@@ -122,10 +254,19 @@
 
 	
 		<h1 id="1级标题-title"><a href="#1级标题-title" class="headerlink" title="1级标题 title"></a>1级标题 title</h1><h2 id="2级标题"><a href="#2级标题" class="headerlink" title="2级标题"></a>2级标题</h2><h3 id="3级标题"><a href="#3级标题" class="headerlink" title="3级标题"></a>3级标题</h3><p>正文，字体。</p>
-<p>代码样式，引用<code>vmulpd</code>和<code>指令集</code>。<em>强调</em>和<strong>强调</strong><br><figure class="highlight c"><figcaption><span>vsum.c</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">float</span> <span class="title">vsum</span><span class="params">(<span class="keyword">float</span> *v, <span class="keyword">int</span> n)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">float</span> s = <span class="number">0.0</span>; <span class="keyword">int</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">0</span>; i&lt;n; i++)</span><br><span class="line">    s += v[i];</span><br><span class="line">    <span class="keyword">return</span> s;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>MathJax test.<br>When \(a \ne 0\), there are two solutions to $ax^2 + bx + c = 0$ and they are<br>inline symbols, $\LaTeX \And \alpha$ and<br>  $$x = {-b \pm \sqrt{b^2-4ac} \over 2a}.$$</p>
-<figure class="highlight html"><figcaption><span>add MathJax support</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">type</span>=<span class="string">"text/x-mathjax-config"</span>&gt;</span><span class="undefined"></span></span><br><span class="line"><span class="undefined">  MathJax.Hub.Config(&#123;tex2jax: &#123;inlineMath: [['$','$'], ['\\(','\\)']]&#125;&#125;);</span></span><br><span class="line"><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">'https://cdnjs.cloudflare.com/ajax/libs/</span></span></span><br><span class="line"><span class="tag"><span class="string">mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML'</span> <span class="attr">async</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>代码样式，引用<code>vmulpd</code>和<code>指令集</code>。<em>强调</em>和<strong>强调</strong><br><code>`</code> c vsum.c<br>float vsum(float *v, int n)<br>{<br>    float s = 0.0; int i;<br>    for (i=0; i&lt;n; i++)<br>    s += v[i];<br>    return s;<br>}</p>
+<pre><code>MathJax test.
+When \\(a \ne 0\\), there are two solutions to $ax^2 + bx + c = 0$ and they are
+inline symbols, $\LaTeX \And \alpha$ and 
+  $$x = {-b \pm \sqrt{b^2-4ac} \over 2a}.$$
 
+```html add MathJax support
+&lt;script type=&quot;text/x-mathjax-config&quot;&gt;
+  MathJax.Hub.Config({tex2jax: {inlineMath: [[&#39;$&#39;,&#39;$&#39;], [&#39;\\(&#39;,&#39;\\)&#39;]]}});
+&lt;/script&gt;
+&lt;script src=&#39;https://cdnjs.cloudflare.com/ajax/libs/
+mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML&#39; async&gt;&lt;/script&gt;
+</code></pre>
 	
 
 	
@@ -149,13 +290,17 @@
 
 	
 		<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><pre><code class="bash">$ hexo new &quot;My New Post&quot;
+</code></pre>
 <p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><pre><code class="bash">$ hexo server
+</code></pre>
 <p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><pre><code class="bash">$ hexo generate
+</code></pre>
 <p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><pre><code class="bash">$ hexo deploy
+</code></pre>
 <p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
 
 	
