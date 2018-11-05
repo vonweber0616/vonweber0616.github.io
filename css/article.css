@@ -9,6 +9,11 @@
   font-style: italic;
 }
 @font-face {
+  font-family: "Noto Sans bold";
+  src: url("fonts/Noto_Sans/NotoSans-Bold.ttf");
+  font-style: bold;
+}
+@font-face {
   font-family: "Noto Serif";
   src: url("fonts/Noto_Serif/NotoSerif-Regular.ttf");
   font-style: normal;
@@ -43,9 +48,9 @@ article {
   }
 }
 article h1 {
-  font-family: "Noto Sans", sans-serif;
+  font-family: "Noto Sans bold";
+  font-weight: bold;
 }
-font-weight: bold,
 h1,
 h2,
 strong {
