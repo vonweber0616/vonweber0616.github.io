@@ -5,10 +5,10 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 	<meta name="theme-color" content="#33474d">
-	<title>SIMD指令优化 | von Weber&#39;s Blog</title>
+	<title>SIMD指令优化 | Von Weber&#39;s Blog</title>
 	<link rel="stylesheet" href="/css/style.css">
 	
-      <link rel="alternate" href="/atom.xml" title="von Weber&#39;s Blog" type="application/atom+xml">
+      <link rel="alternate" href="/atom.xml" title="Von Weber&#39;s Blog" type="application/atom+xml">
 	
 	
 	<script type="text/x-mathjax-config">
@@ -16,6 +16,13 @@
 	</script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML" async></script>
 
+	
+		<!-- Highlight.js -->
+		<link rel="stylesheet" href="//cdn.bootcss.com/highlight.js/9.2.0/styles/github.min.css">
+		<script src="//cdn.bootcss.com/highlight.js/9.2.0/highlight.min.js">
+		</script>
+		<script> hljs.initHighlightingOnLoad();
+		</script>
 	
 
 </head>
@@ -32,7 +39,7 @@
 				<a href="/atom.xml" class="header__link">RSS</a>
 			
 		</nav>
-		<h1 class="header__title"><a href="/">von Weber&#39;s Blog</a></h1>
+		<h1 class="header__title"><a href="/">Von Weber&#39;s Blog</a></h1>
 		<h2 class="header__subtitle"></h2>
 	</header>
 
@@ -69,7 +76,7 @@
 <h2 id="GCC自动优化"><a href="#GCC自动优化" class="headerlink" title="GCC自动优化"></a>GCC自动优化</h2><p>我们可以用命令<code>gcc -S -o simd0.s simd0.c</code>生成上述程序<code>simd0.exe</code>的汇编代码，看看哪里可以优化，其实这个汇编的蠢不在于没有用SIMD指令，主要问题是有太多的访问内存指令，代码没有贴出来。</p>
 <p>如果我们使用<code>-O1</code>参数进行优化，即<code>gcc -O1 -o simd0-O1.exe simd0.c</code>，消耗的时间下降为<code>3s 841ms 346μs</code>。汇编代码如<code>code 1: simd0-O1.s</code>, 其中略去了计时，打印和某些伪指令，下同。<br><figure class="highlight x86asm"><figcaption><span>code 1: simd0-O1.s</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">main:</span></span><br><span class="line">  movl <span class="number">$50000</span>, %edx</span><br><span class="line">  <span class="keyword">jmp</span> .L2</span><br><span class="line"><span class="symbol">.L6:</span></span><br><span class="line">  <span class="keyword">addss</span> %xmm1, %xmm1</span><br><span class="line">  subl <span class="number">$1</span>, %edx</span><br><span class="line">  <span class="keyword">je</span> .L4</span><br><span class="line"><span class="symbol">.L2:</span></span><br><span class="line">  movl <span class="number">$0</span>, %eax</span><br><span class="line"><span class="symbol">.L3:</span></span><br><span class="line">  <span class="keyword">movss</span> a(%rax), %xmm0</span><br><span class="line">  <span class="keyword">addss</span> b(%rax), %xmm0</span><br><span class="line">  <span class="keyword">mulss</span> c(%rax), %xmm0</span><br><span class="line">  <span class="keyword">movss</span> %xmm0, r(%rax)</span><br><span class="line">  addq <span class="number">$4</span>, %rax</span><br><span class="line">  cmpq <span class="number">$400000</span>, %rax</span><br><span class="line">  <span class="keyword">jne</span> .L3</span><br><span class="line">  <span class="keyword">jmp</span> .L6</span><br><span class="line"><span class="symbol">.L4:</span></span><br><span class="line">  <span class="keyword">cvttss2si</span> %xmm1, %eax</span><br><span class="line">  <span class="keyword">ret</span></span><br></pre></td></tr></table></figure></p>
 <p><code>simd0-O1.s</code>的代码和不使用优化的代码相比，主要改进是从内存中取一个数比如<code>a[i]</code>，只需要一次访存，因为指标<code>i</code>存在寄存器<code>%rax</code>中，这一个改进大幅降低了访问指标<code>i</code>和数组元素<code>a[i]</code>和其他数组的时间。<code>simd0-O1.s</code>的代码非常符合我们思维，它使用<code>movss</code>从内存中取一个单精度数，使用<code>addss</code>和<code>mulss</code>执行单精度浮点数的加法和乘法。执行一遍计算后再做第二遍。</p>
-<p>使用<code>-O2</code>优化和<code>-O1</code>对这个程序太大差异，我们略去。</p>
+<p>使用<code>-O2</code>优化和<code>-O1</code>对这个程序没有太大差异，我们略去。</p>
 <h2 id="SIMD的第一尝试"><a href="#SIMD的第一尝试" class="headerlink" title="SIMD的第一尝试"></a>SIMD的第一尝试</h2><p>如果我们使用<code>-O3</code>级别优化，就会放发生某些不一样的事情，汇编代码见<code>code 2: simd0-O3.s</code><br><figure class="highlight x86asm"><figcaption><span>code 2: simd0-O3.s</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">main:</span></span><br><span class="line">  movl <span class="number">$50000</span>, %edx</span><br><span class="line"><span class="symbol">.L2:</span></span><br><span class="line">  xorl %eax, %eax</span><br><span class="line"><span class="symbol">.L3:</span></span><br><span class="line">  <span class="keyword">movaps</span> b(%rax), %xmm0</span><br><span class="line">  <span class="keyword">addps</span> a(%rax), %xmm0</span><br><span class="line">  addq <span class="number">$16</span>, %rax</span><br><span class="line">  <span class="keyword">mulps</span> c-<span class="number">16</span>(%rax), %xmm0</span><br><span class="line">  <span class="keyword">movaps</span> %xmm0, r-<span class="number">16</span>(%rax)</span><br><span class="line">  cmpq <span class="number">$400000</span>, %rax</span><br><span class="line">  <span class="keyword">jne</span> .L3</span><br><span class="line">  <span class="keyword">addss</span> %xmm1, %xmm1</span><br><span class="line">  subl <span class="number">$1</span>, %edx</span><br><span class="line">  <span class="keyword">jne</span> .L2</span><br><span class="line">  <span class="keyword">cvttss2si</span> %xmm1, %eax</span><br><span class="line">  <span class="keyword">ret</span></span><br></pre></td></tr></table></figure></p>
 <p>和<code>code 1: simd0-O2.s</code>相比，<code>code 2: simd0-O3.s</code>代码启用了SSE指令集的SIMD指令，它使用完整的<code>xmm</code>寄存器，而不是低32位，进行浮点数的加法和乘法。其中，<code>movaps</code>从内存中取4个单精度浮点数放在<code>xmm</code>寄存器中，或者相反方向，<code>addps</code>和<code>mulps</code>分别对<code>xmm</code>寄存器中的4个单精度数据做加法和乘法。使用SSE指令，运行时间又降为<code>2s 612ms 38μs</code>。</p>
 <h2 id="AVX2上场"><a href="#AVX2上场" class="headerlink" title="AVX2上场"></a>AVX2上场</h2><p>虽然我们仍然可以使用参数让编译器自动向量化，比如<code>gcc -O3 -maxv2 -o simd1-avx2-O3.exe simd1.c</code>，但是这样的优化结果是不可预测的，因此在编程的时候使用适当的机制或约定引导编译器进行向量化，是更加稳健的方法。</p>
