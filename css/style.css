@@ -9,11 +9,6 @@
   font-style: italic;
 }
 @font-face {
-  font-family: "Noto Sans";
-  src: url("fonts/Noto_Sans/NotoSans-Bold.ttf");
-  font-style: bold;
-}
-@font-face {
   font-family: "Noto Serif";
   src: url("fonts/Noto_Serif/NotoSerif-Regular.ttf");
   font-style: normal;
@@ -55,11 +50,6 @@ p {
   font-style: italic;
 }
 @font-face {
-  font-family: "Noto Sans";
-  src: url("fonts/Noto_Sans/NotoSans-Bold.ttf");
-  font-style: bold;
-}
-@font-face {
   font-family: "Noto Serif";
   src: url("fonts/Noto_Serif/NotoSerif-Regular.ttf");
   font-style: normal;
@@ -88,11 +78,6 @@ p {
   font-family: "Noto Sans";
   src: url("fonts/Noto_Sans/NotoSans-Italic.ttf");
   font-style: italic;
-}
-@font-face {
-  font-family: "Noto Sans";
-  src: url("fonts/Noto_Sans/NotoSans-Bold.ttf");
-  font-style: bold;
 }
 @font-face {
   font-family: "Noto Serif";
@@ -420,11 +405,6 @@ article .different-posts {
   font-style: italic;
 }
 @font-face {
-  font-family: "Noto Sans";
-  src: url("fonts/Noto_Sans/NotoSans-Bold.ttf");
-  font-style: bold;
-}
-@font-face {
   font-family: "Noto Serif";
   src: url("fonts/Noto_Serif/NotoSerif-Regular.ttf");
   font-style: normal;
@@ -560,11 +540,6 @@ article .different-posts {
   font-style: italic;
 }
 @font-face {
-  font-family: "Noto Sans";
-  src: url("fonts/Noto_Sans/NotoSans-Bold.ttf");
-  font-style: bold;
-}
-@font-face {
   font-family: "Noto Serif";
   src: url("fonts/Noto_Serif/NotoSerif-Regular.ttf");
   font-style: normal;
@@ -690,11 +665,6 @@ article .different-posts {
   font-family: "Noto Sans";
   src: url("fonts/Noto_Sans/NotoSans-Italic.ttf");
   font-style: italic;
-}
-@font-face {
-  font-family: "Noto Sans";
-  src: url("fonts/Noto_Sans/NotoSans-Bold.ttf");
-  font-style: bold;
 }
 @font-face {
   font-family: "Noto Serif";
@@ -908,11 +878,6 @@ pre .javascript .function {
   font-family: "Noto Sans";
   src: url("fonts/Noto_Sans/NotoSans-Italic.ttf");
   font-style: italic;
-}
-@font-face {
-  font-family: "Noto Sans";
-  src: url("fonts/Noto_Sans/NotoSans-Bold.ttf");
-  font-style: bold;
 }
 @font-face {
   font-family: "Noto Serif";
