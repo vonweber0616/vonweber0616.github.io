@@ -47,12 +47,45 @@
 		<span class="article__date">2018-11-05</span><br>
 		
 		
+			<span class="article__tags">
+			  	<a class="article__tag-link" href="/tags/c/">c</a> <a class="article__tag-link" href="/tags/统计/">统计</a> <a class="article__tag-link" href="/tags/统计计算/">统计计算</a> <a class="article__tag-link" href="/tags/随机数产生/">随机数产生</a>
+			</span>
+		
 	</div>
 
 	
 
 	
-		
+		<p>ARS (Adaptive Rejection Sampling) 是一种生成具有对数凸密度 (log-concave density)的随机数的方法，ARS使用包围的接受拒绝 (Envelope Accept-Reject) 方法，而Envelope接受拒绝方法是一般接受拒绝方法的一个变形（改进）。</p>
+<h2 id="Envelope-Accept-Reject"><a href="#Envelope-Accept-Reject" class="headerlink" title="Envelope Accept-Reject"></a>Envelope Accept-Reject</h2><p>和普通的接受拒绝方法相比，EAR多了一个下界，即，若存在密度$g_m$，函数$g_l$和正常数$M$满足<br>$$g_l(x) \leq f(x) \leq Mg_m(x),$$<br>则下列算法产生随机变量服从分布$f$</p>
+<ol>
+<li>生成 $X \sim g_m(x), U \sim \mathcal{U}_{[0,1]}$</li>
+<li>IF  $U \leq g_l(X)/Mg_m(X)$</li>
+<li>THEN 接受$X$</li>
+<li>ELSEIF  $U \leq f(X)/Mg_m(X)$</li>
+<li>THEN  接受$X$</li>
+</ol>
+<p>这个算法的成立是显然的，若有$U \leq g_l(X)/Mg_m(X)$，必有$U \leq f(X)/Mg_m(X)$，所以和普通的接受拒绝方法相比，EAR可能在第2行就结束，而不用计算$f(x)$的值，这个优点当$f(x)$很难计算时便很有用。</p>
+<p>当然EAR并不能完全避免计算$f(x)$的值，具体来讲，节省的比例为<br>$$\begin{align}<br>P(U \leq g_l(X)/Mg_m(x)) &amp;= E[P(U \leq g_l(X)/Mg_m(X) | X)] \\<br>                         &amp;= E[g_l(X)/Mg_m(X)] \\<br>                         &amp;= \frac{1}{M} \int{g_m(x)dx}<br>\end{align}$$</p>
+<p>值得一提的是，上述的函数$g_l, f, g_m$，都可以之多差一个系数，但是这样的话，常数$M$不再具有上述的含义。以正态分布$N(0,1)$为例，略去常数，取 $f(x)=\exp (-x^2/2)$。由泰勒公式，<br>$$e^{-x^2/2} \geq 1-\frac{x^2}{2}$$<br>于是可取<br>$$g_l(x) = \left (1-\frac{x^2}{2} \right ) \lor 0$$<br>另一方面若取$g_m(x)$为Laplace(1)分布，即$g_m(x)=\lambda /2 \exp (-\lambda x), \lambda=1$，则容易计算接受率为76%，引入Envelope下界，可避免58%的$f(x)$的计算，对于复杂的目标密度，这个节省还是很可观。</p>
+<h2 id="Adaptive-Rejection-Sampling"><a href="#Adaptive-Rejection-Sampling" class="headerlink" title="Adaptive Rejection Sampling"></a>Adaptive Rejection Sampling</h2><p>自适应拒绝采样(ARS)的想法很简单，基于上述EAR的思路，对于具有对数凸密度的随机变量，有凸函数的集合性质，很容易构造出自适应的Envelope上下界，准确来讲是利用分段线性函数来构造。</p>
+<p><figure class="figure"><img src="/img/ARS.svg" alt="ARS"><figcaption class="figure__caption">ARS</figcaption></figure></p>
+<p>如上图所示，设 $h=\log f$ 凸，$S_n = \{x_i, i=0,1,…,n+1\}$ 是一列从小到大的 $f$ 支撑上的点。由 $h$ 的凸性，直线 $L_{i,i+1}$ 穿过点 $(x_i,h(x_i))$ 和点 $(x_{i+1},h(x_{i+1}))$，在区间 $[x_i,x_{i+1}]$ 上在 $h$ 的下方，在这个区间外在 $h$ 的上方，于是我们定义<br>$$ \overline{h}_n (x) = \min \{ L_{i-1,i}(x), L_{i+1,i+2}(x) \}$$</p>
+<p>如上图红线，定义<br>$$\underline{h}_n(x) = L_{i,i+1}(x)$$</p>
+<p>如上图蓝线所示。在集合 $[x_0,x_{n+1}]^c$ 上补充<br>$$\underline{h}_n(x) = - \infty, \quad \overline{h}_n (x) = \min \{ L_{0,1}(x), L_{n,n+1}(x)$$<br>这样，在 $f$ 的支撑上成立<br>$$\underline{h}_n(x) \leq h(x) \leq \overline{h}_n (x)$$<br>最后全都取指数，即 $\underline{f}_n(x) = \exp \underline{h}_n(x)$，$\overline{f}_n(x) = \exp \overline{h}_n(x)$，有<br>$$\underline{f}_n(x) \leq f(x) \leq \overline{f}_n (x)= \varpi g_n(x)$$<br>最右边的等号表示，将 $\overline{f}_n(x)$ 归一化为密度函数，$\varpi$是正规化常数。</p>
+<p>这样我们得到了Envelope的上下界，带入到EAR算法中，我们得到如下的ARS算法</p>
+<ol start="0">
+<li>初始化 $n$ 和 $S_n$</li>
+<li>生成 $X \sim g_n(x), U \sim \mathcal{U}_{[0,1]}$</li>
+<li>IF U \leq \underline{f}_n(X) / \varpi g_n(X)</li>
+<li>THEN 接受 $X$</li>
+<li>ELSEIF U \leq f(X) / \varpi g_n(X)</li>
+<li>THEN 接受 $X$</li>
+<li>$\qquad$更新 $S_n \to S_{n+1}=S_n \cup \{ X \}$</li>
+</ol>
+<p>ARS算法在生成随机数过程中会不断更新 $S_n$，使得Envelope上下界越来越接近 $f$，算法的效率越来越高，体现在接受率越来越接近1,和计算 $f(x)$ 的频率越来越少。</p>
+<p>到此为止，ARS算法只差的步骤1的生成 $X \sim g_n(x)$，它被解决如下</p>
+<h2 id="Generate-X-sim-g-n-x"><a href="#Generate-X-sim-g-n-x" class="headerlink" title="Generate $X \sim g_n(x)$"></a>Generate $X \sim g_n(x)$</h2>
 	
 
 	
