@@ -14,9 +14,9 @@
   font-style: bold;
 }
 @font-face {
-  font-family: "Noto Sans LightItalic";
-  src: url("fonts/Noto_Sans/NotoSans-LightItalic.ttf");
-  font-style: lightitalic;
+  font-family: "Noto Sans ExtraLightItalic";
+  src: url("fonts/Noto_Sans/NotoSans-ExtraLightItalic.ttf");
+  font-style: ExtraLightItalic;
 }
 @font-face {
   font-family: "Noto Serif";
