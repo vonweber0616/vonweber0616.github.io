@@ -41,6 +41,91 @@
 
 	<article>
 	
+		<h1><a href="/2018/11/20/Laplace-Approximation/">Laplace Approximation</a></h1>
+	
+	<div class="article__infos">
+		<span class="article__date">2018-11-20</span><br>
+		
+		
+			<span class="article__tags">
+			  	<a class="article__tag-link" href="/tags/积分计算/">积分计算</a> <a class="article__tag-link" href="/tags/统计/">统计</a> <a class="article__tag-link" href="/tags/统计计算/">统计计算</a>
+			</span>
+		
+	</div>
+
+	
+
+	
+		<p>统计中的计算问题大致可以分成两类，积分问题和最优化问题，积分问题常常和Bayes方法有关，最优化问题常常和似然方法相关。求积分的方法，除了基于模拟的Monte Carlo方法外，也有一些基于分析的方法在统计中常见，其中最古老也最有用的方法就是Laplace近似。</p>
+<p>假设我们感兴趣的积分问题是<br>$$\int_A f(x|\theta) dx$$<br>其中 $f$ 是非负可积函数，$\theta$ 是固定的参数。</p>
+<p>将被积函数写作 $f(x|\theta)=\exp \{ nh(x|\theta) \}$，其中n是样本大小或者某个可以趋近无穷大的参数，对 $h(x|\theta)$ 在 $x_0$ 点作Taylor展开，得到<br>$$h(x|\theta) =<br>h(x_0|\theta)+(x-x_0)h’(x_0|\theta)+{(x-x_0)^2 \over 2!} h’’(x_0|\theta)+<br>{(x-x_0)^3 \over 3!} h’’’(x_0|\theta) + R_n(x)$$<br>其中 $R_n(x) = o((x-x_0)^3), x \to x_0.$</p>
+<p>现在选择 $x_0=\hat x_{\theta}$，满足 $h’(x_0|\theta)=0$ 且最大化 $h(x|\theta)$。在 $\hat x_{\theta}$ 的某个邻域成立<br>$$\int_A e^{nh(x|\theta)} dx \approx e^{nh(\hat x_{\theta}|\theta)} \int_A<br>e^{n {(x-x_0)^2 \over 2!} h’’(\hat x_{\theta}|\theta)}<br>e^{n {(x-x_0)^3 \over 3!} h’’’(\hat x_{\theta}|\theta)}$$<br>对于三阶导项，若考虑指数展开 $e^y \approx 1+y+y^2/{2!}$ ，得到近似<br>$$e^{n {(x-x_0)^3 \over 3!} h’’’(\hat x_{\theta}|\theta)} \approx<br>1+ n {(x-x_0)^3 \over 3!} h’’’(\hat x_{\theta}|\theta)+<br>n^2 {(x-x_0)^6 \over {2! (3!)^2 }} [ h’’’(\hat x_{\theta}|\theta) ]^2$$</p>
+<p>带回去，我们得到<br>$$\int_A e^{nh(x|\theta)} dx \approx<br>e^{nh(\hat x_{\theta}|\theta)} \int_A<br>e^{n {(x-x_0)^2 \over 2!} h’’(\hat x_{\theta}|\theta)} \times<br>\left[ 1+ n {(x-x_0)^3 \over 3!} h’’’(\hat x_{\theta}|\theta)+<br>n^2 {(x-x_0)^6 \over {2! (3!)^2 }} [ h’’’(\hat x_{\theta}|\theta) ]^2 \right] dx$$<br>上式方括号内分别取前1/2/3项，分别叫做一阶/二阶/三阶Laplace近似。</p>
+<p>特别地，对于一阶近似，注意到其和正态分布密度的关系，我们可以将其表示为<br>$$\int_A e^{nh(x|\theta)} dx \approx<br>e^{nh(\hat x_{\theta}|\theta)}<br>\sqrt{2 \pi \over {-n h’’(\hat x_{\theta}|\theta)}} \times<br>\left \{ \Phi [ \sqrt{-n h’’(\hat x_{\theta}|\theta)} (b- \hat x_{\theta}) ] -<br>\Phi [ \sqrt{-n h’’(\hat x_{\theta}|\theta)} (a- \hat x_{\theta}) ]\right \} $$<br>其中，取 $A=[ a,b ]$，$\Phi(\cdot)$ 为标准正态分布的cdf。</p>
+<p>从上面的形式可以看出，Laplace近似的计算不存在本质困难，但二三阶近似的计算略显繁琐。</p>
+<h3 id="Gamma积分的近似"><a href="#Gamma积分的近似" class="headerlink" title="Gamma积分的近似"></a>Gamma积分的近似</h3><p>若以一例来说明Laplace近似的功效，我们考虑Gamma分布 $\mathcal{G}a(\alpha, 1/ \beta)$ 的积分<br>$$\int_a^b {x^{\alpha-1} \over {\Gamma (\alpha) \beta^\alpha}} e^{-x/ \beta} dx$$</p>
+<p>略去分母的常数，首先求得 $h(x) = - {x \over \beta} +(\alpha-1) \log(x)$，一二三阶导数分别为<br>$$\begin{align}<br>    h’(x) &amp;= {\alpha -1 \over x}- {1 \over \beta} \\<br>    h’’(x) &amp;= - {\alpha-1 \over x^2} \\<br>    h’’’(x) &amp;= {2(\alpha-1) \over x^3}<br>\end{align}$$<br>对于 $\alpha=5, \beta=2$，选取 $\hat x_\theta = (\alpha-1)\beta=8$。对于不同的积分区间，计算Laplace近似，得到下表</p>
+<table>
+<thead>
+<tr>
+<th>区间</th>
+<th>一阶近似</th>
+<th>二阶近似</th>
+<th>三阶近似</th>
+<th>精确值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(7,9)</td>
+<td>0.193351</td>
+<td>0.193351</td>
+<td>0.193351</td>
+<td>0.193341</td>
+</tr>
+<tr>
+<td>(6,10)</td>
+<td>0.375046</td>
+<td>0.375046</td>
+<td>0.375057</td>
+<td>0.374770</td>
+</tr>
+<tr>
+<td>(2,14)</td>
+<td>0.848559</td>
+<td>0.848559</td>
+<td>0.859839</td>
+<td>0.823349</td>
+</tr>
+<tr>
+<td>(0,7)</td>
+<td>0.370755</td>
+<td>0.293452</td>
+<td>0.315920</td>
+<td>0.274555</td>
+</tr>
+<tr>
+<td>(15.987,$\infty$)</td>
+<td>0.022454</td>
+<td>0.075564</td>
+<td>0.155272</td>
+<td>0.100005</td>
+</tr>
+</tbody>
+</table>
+<p>由此可以看出，对于一般的包含的 $\hat x_\theta$ 的区间，Laplace近似效果不错，尤其的关于 $\hat x_\theta$ 对称的区间，由于二阶近似等于一阶近似，一阶近似的值已经相当精确。但是对于偏离 $\hat x_\theta$ 的区间，近似的偏差较大，对于尾概率的估计更是难以接受。相较于费时的Monte Carlo方法，快捷的Laplace近似可以看作最终解决方案的一个指导。</p>
+
+	
+
+	
+
+</article>
+
+
+
+
+	<article>
+	
 		<h1><a href="/2018/11/05/ARS-Adaptive-Rejection-Sampling/">ARS (Adaptive Rejection Sampling)</a></h1>
 	
 	<div class="article__infos">
@@ -100,7 +185,7 @@
 <p>结构体<code>Interval</code>保存了区间 $[ x_i, x_{i+1} ]$ 上的envelope上下界，包含下界一段和上界（至多）两段线段的信息。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="keyword">double</span> x1, x2;</span><br><span class="line">    <span class="keyword">double</span> alpha, beta;</span><br><span class="line">    Position flag;</span><br><span class="line">    Segment leftseg, rightseg;</span><br><span class="line">&#125; Interval;</span><br></pre></td></tr></table></figure></p>
 <p>最后我们使用二叉搜索树来组织这些<code>Interval</code>，节点的序关系由区间的前后定义。二叉树的实现使得对分段函数的查找和求值达到 $O(\log n)$ 的时间复杂度。</p>
 <p>生成随机数的函数<code>rars()</code>接受一个指向求密度函数对数的函数指针<code>(*log_density)(double)</code> ，不同的函数指针可以包装成不同的随机数函数。</p>
-<p>下面的Gist显式了部分核心代码，完整的源代码参见 <a href="https://github.com/vonweber0616/ARS" target="_blank" rel="noopener">GitHub仓库</a>。</p>
+<p>下面的显示了部分核心代码，完整的源代码参见 <a href="https://github.com/vonweber0616/ARS" target="_blank" rel="noopener">GitHub仓库</a>。</p>
 <p>最后值得一提的是ARS的算法我觉得唯一的优点就是泛用性，因为许多有用的分布都是对数凹密度。ARS算法看起来很理想，但是在实现上的缺点是它包含大量动态内存操作，这些内存操作的开销已经远超过计算本身，此外由于ARS算法构造分段的envelope上下界，随着集合 $S_n$ 不断增大，对分段函数进行求值得开销也越来越大。所以我觉得不如一开始就设定一个充分大的集合 $S_n$，比如包含几百个分割点，无需在生成随机数过程中更新 $S_n$。</p>
 <script src="//gist.github.com/141a5cb0e9229491c07b3442ae5bd841.js?file=ARS.c"></script>
 
