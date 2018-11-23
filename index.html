@@ -41,6 +41,182 @@
 
 	<article>
 	
+		<h1><a href="/2018/11/23/Saddlepoint-Approximation/">Saddlepoint Approximation</a></h1>
+	
+	<div class="article__infos">
+		<span class="article__date">2018-11-23</span><br>
+		
+		
+			<span class="article__tags">
+			  	<a class="article__tag-link" href="/tags/积分计算/">积分计算</a> <a class="article__tag-link" href="/tags/统计/">统计</a> <a class="article__tag-link" href="/tags/统计计算/">统计计算</a>
+			</span>
+		
+	</div>
+
+	
+
+	
+		
+	
+
+	
+
+</article>
+
+
+
+
+	<article>
+	
+		<h1><a href="/2018/11/22/Edgeworth-Expansion/">Edgeworth Expansion</a></h1>
+	
+	<div class="article__infos">
+		<span class="article__date">2018-11-22</span><br>
+		
+		
+			<span class="article__tags">
+			  	<a class="article__tag-link" href="/tags/积分计算/">积分计算</a> <a class="article__tag-link" href="/tags/统计/">统计</a> <a class="article__tag-link" href="/tags/统计计算/">统计计算</a>
+			</span>
+		
+	</div>
+
+	
+
+	
+		<p>许多时候，我们感兴趣的随机变量 $X$ 具有复杂的结构，我们无法或者很难得到它的精确分布密度PDF或分布函数CDF，对于 $X$ 的研究比如求概率 $P(X \in A)$ 就变得不那么直接。多数情况下，$X$ 可以表示为一些独立甚至同分布随机变量的和（均值）。对于平凡的问题，我们可以利用中心极限定理CLT将 $X$ 的分布近似为正态分布。然而对于一些问题比如</p>
+<ul>
+<li>$\bar X={1 \over n} \sum_{i=1}^n X_i$，n很小只有几或者几十</li>
+<li>$P(\bar X \in A)$ 很小比如 $P(\sqrt{n}|\bar X -\mu| &gt; 4\sigma)$ </li>
+</ul>
+<p>此时正态分布的近似就很差。而Edgeworth展开作为中心极限定理的自然延伸，从一定程度上改善了近似的效果</p>
+<h2 id="Tchebycheff–Hermite-Polynomials"><a href="#Tchebycheff–Hermite-Polynomials" class="headerlink" title="Tchebycheff–Hermite Polynomials"></a>Tchebycheff–Hermite Polynomials</h2><p>设 $\phi(z)$ 是标准正态分布 $N(0,1)$ 的密度函数，由归纳法容易证明，存在多项式 $ \{H(z) \}_k$ 成立<br>$${ d^k \over dz^k} \phi (z) = (-1)^k H_k(z) \phi (z) $$<br>其中 $\{ H_k(z): k \in \Bbb{N} \}$ 称为Tchebycheff–Hermite多项式。对上式求导，得到<br>$${d \over dx} [ H_k(z)\phi(z) ]=-H_{k+1}(z)\phi(z) $$<br>由此可以递推出 $H_k(z)$，前几项为<br>$$\begin{align}<br>    H_0(z) &amp;=1 &amp; H_3(z)&amp;= z^3 − 3z  \\<br>    H_1 (z) &amp;= z  &amp; H_4 (z) &amp;= z^4 − 6z^2 + 3 \\<br>    H_2 (z) &amp;= z^2 − 1 &amp; H_5 (z) &amp;= z^5 − 10z^3 + 15z<br>\end{align}$$</p>
+<p>$\{ H_k(z): k \in \Bbb{N} \}$ 是正交多项式，在如下的加权內积意义下<br>$$&lt;H_i(z), H_j(z)&gt; = \int_{\Bbb{R} }H_i (z) H_j (z)\phi (z)dz=<br>\begin{cases}<br>    0 &amp; \text{if }i\neq j \\<br>    i! &amp; \text{if } i=j<br>\end{cases}$$</p>
+<h2 id="Inverse-Fourier-Transform"><a href="#Inverse-Fourier-Transform" class="headerlink" title="Inverse Fourier Transform"></a>Inverse Fourier Transform</h2><p>设 $X \sim g(x)$ 具有特征函数 $h(u)$，则 $h(u)$ 具有逆变换<br>$$g(x)={1 \over 2\pi } \int_{\Bbb{R}} e^{-iux} h(u)du$$<br>特别地，由Fourier变换的性质，成立<br>$$\begin{align}<br>{1 \over 2\pi } \int_{\Bbb{R}} e^{-iux} e^{-u^2/2} (iu)^k du<br>&amp;= {(-1)^k \over 2 \pi} {d^k \over dx^k} \int_{\Bbb{R}} e^{-iux} e^{-u^2/2}du \\<br>&amp;= (-1)^k {d^k \over dx^k} \phi(x) \\<br>&amp;= H_k(x)\phi(x)<br>\end{align}$$<br>也就是说若 $X$ 具有特征函数 $e^{-u^2/2} (iu)^k$，则 $X$ 具有密度函数 $H_k(x)\phi(x)$。</p>
+<h2 id="Edgeworth-Expansion-的推导"><a href="#Edgeworth-Expansion-的推导" class="headerlink" title="Edgeworth Expansion 的推导"></a>Edgeworth Expansion 的推导</h2><p>设 $X_i$ 有均值0方差1，有有限四阶矩，记 $\gamma=E X_j^3, \tau=E X_j^4$。现在考虑正规化均值 $S_n = \sqrt{n} \bar X$ 的特征函数。<br>$$h_{S_n} (u)=E \exp \{ ( iu/ \sqrt{n} ) \sum X_j \} =[ h_X(u/\sqrt{n}) ]^n$$<br>对 $\exp \{ iuX/\sqrt{n} \}$ 作泰勒展开得到<br>$$h_X \left( {u \over \sqrt{n}} \right) = E e^ { iu {X \over \sqrt{n}} }<br>= \left( 1- {u^2 \over 2n} \right) +<br>{(iu)^3 \gamma \over 6n \sqrt{n} } +<br>{(iu)^4 \tau \over 24n^2 } +<br>o \left( {1 \over n^2} \right)$$<br>两边取n次幂，再由二项展开式和<br>$$ \left( 1+ {a \over n} \right) ^{n-k} =<br>e^a \left( 1- {a(a+k) \over 2n} \right) +<br>o \left( {1 \over n} \right)$$<br>得到<br>$$h_{S_n}(u) = e^{-u^2/2} \left[ 1 +<br>{(iu)^3 \gamma \over 6 \sqrt{n} } +<br>{(iu)^4 ( \tau -3) \over 24n } +<br>{(iu)^6 \gamma^2 \over 72n} \right] +<br>o \left( {1 \over n} \right)$$<br>最后由上述关于特征函数和密度函数的逆变换，得到 $S_n$ 的密度函数为<br>$$\begin{align}<br>g_{S_n}(x) &amp;= {1 \over 2\pi } \int_{\Bbb{R}} e^{-iux} h_{S_n}(u) du \\<br>&amp;= \phi(x) \left( 1+<br>{1 \over \sqrt{n}} {\gamma H_3(x) \over 6} +<br>{1 \over n} \left[ {(\tau-3) H_4(x) \over 24} +<br>{\gamma^2 H_5(x) \over 72} \right] \right) +<br>o \left( {1 \over n} \right)<br>\end{align}$$<br>两边求积分，利用上面 $H_k(x) \phi(x)$ 的递推关系得到 $S_n$ 分布函数的近似<br>$$G_{S_n}(x)=<br>\Phi(x) - \phi(x) \left(<br>{1 \over \sqrt{n}} {\gamma H_2(x) \over 6} +<br>{1 \over n} \left[ {(\tau-3) H_3(x) \over 24} +<br>{\gamma^2 H_4(x) \over 72} \right] \right) +<br>o \left( {1 \over n} \right)<br>$$<br>包含上述 $1/\sqrt{n}$ 和 $ 1/n$ 的近似，分别叫做Edgeworth一阶/二阶展开。</p>
+<p>此外值得一提的是</p>
+<ul>
+<li>若 $X_i$ 具有对称分布，三阶矩 $\gamma=0$，通常的正态分布近似已经具有一阶Edgeworth近似的精度，</li>
+<li>$g_{S_n}(x)$ 在0点（非正规化的随机变量在均值 $\mu$ 点），由于奇数Hermite多项式在0点为0，即 $H_3(0)=0$，故一阶Edgeworth近似具有 $O(1/n)$ 的精度，</li>
+<li>Edgeworth展开并未进行概率意义上的规约，所以计算结果可能超出 $[0,1]$ 之外。</li>
+<li>高阶的Edgeworth展开虽然具有理论上的高阶渐进精度，单也容易矫枉过正，使结果不可靠，因而仅具有理论意义。</li>
+</ul>
+<h2 id="指数分布的和"><a href="#指数分布的和" class="headerlink" title="指数分布的和"></a>指数分布的和</h2><p>设 $X_i \sim \text{Exp}(1),i=1,…,5$ 则 $\mu = \sigma^2=1, E(X_i-\mu)^3/\sigma^3 = 2, E(X_i-\mu)^4/\sigma^4 = 6$。现在考虑 $X_i$ 的正规化和 $S_n = \sqrt{n} (\bar X -\mu)$ 的分布，由于 $\sum X_i \sim \Gamma(5,1)$，我们可以准确知道 $S_n$ 的分布。下面的代码和图1展示了正态分布和Edgeworth近似的效果。</p>
+<pre><code class="R">n = <span class="number">5</span>
+b1 = <span class="number">2</span>
+b2 = <span class="number">6</span>
+H3 = <span class="keyword">function</span>(x) (x ^ <span class="number">3</span> - <span class="number">3</span> * x)
+H4 = <span class="keyword">function</span>(x) (x ^ <span class="number">4</span> - <span class="number">6</span> * x ^ <span class="number">2</span> + <span class="number">3</span>)
+H6 = <span class="keyword">function</span>(x)  (x ^ <span class="number">6</span> - <span class="number">15</span> * x ^ <span class="number">4</span> + <span class="number">45</span> * x ^ <span class="number">2</span> - <span class="number">15</span>)
+
+f1 = <span class="keyword">function</span>(x) {
+  dnorm(x) * (<span class="number">1</span> + b1 * H3(x) / <span class="number">6</span> / sqrt(n))
+}
+
+f2 = <span class="keyword">function</span>(x) {
+  f1(x) + (b2 * H4(x) / <span class="number">24</span> / n + b1 ^ <span class="number">2</span> * H6(x) / <span class="number">72</span> / n) * dnorm(x)
+}
+x = seq(-<span class="number">3</span>, <span class="number">3</span>, <span class="number">0.01</span>)
+fn_true = dgamma((x + sqrt(n)) * sqrt(n), n, <span class="number">1</span>) * sqrt(n)
+fn_E0 = dnorm(x)
+fn_E1 = f1(x)
+fn_E2 = f2(x)
+label = c(<span class="string">'Exact'</span>,
+          <span class="string">'Normal'</span>,
+          <span class="string">'First-order Edgeworth'</span>,
+          <span class="string">'Second-order Edgeworth'</span>)
+data = data.frame(
+  density = c(fn_true, fn_E0, fn_E1, fn_E2),
+  x = rep(x, <span class="number">4</span>),
+  estimate = rep(label, each = length(x))
+)
+ggplot(data, aes(x, density, color = estimate)) +
+  scale_colour_manual(breaks = label,
+                      values = c(<span class="string">'#000000'</span>, <span class="string">'#1b9e77'</span>,  <span class="string">'#d95f02'</span>, <span class="string">'#7570b3'</span>)) +
+  theme(legend.position = c(<span class="number">0.85</span>, <span class="number">0.82</span>)) +
+  geom_line()
+</code></pre>
+<p><figure class="figure"><img src="/img/Edgeworth-1.svg" alt="图1. 指数分布和的Edgeworth近似"><figcaption class="figure__caption">图1. 指数分布和的Edgeworth近似</figcaption></figure></p>
+<p>由上图可以看出</p>
+<ul>
+<li>正态分布的近似效果极差，由于样本量太小，无法纠正指数分布的偏度</li>
+<li>Edgeworth近似在分布的主体部分有不错的近似效果</li>
+<li>在分布的尾部，Edgeworth的效果的仍不好，甚至在左尾出现了负值</li>
+</ul>
+<p>下面的表格展示了一些区间概率的估计，印证了上面的论断</p>
+<table>
+<thead>
+<tr>
+<th>$(a,b)$</th>
+<th>正态分布</th>
+<th>一阶Edgeworth近似</th>
+<th>二阶Edgeworth近似</th>
+<th>精确值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$(-\infty,-2.0)$</td>
+<td>0.023</td>
+<td>-0.001</td>
+<td>-0.007</td>
+<td>0.000</td>
+</tr>
+<tr>
+<td>$(-\infty,-1.8)$</td>
+<td>0.036</td>
+<td>0.010</td>
+<td>0.000</td>
+<td>0.003</td>
+</tr>
+<tr>
+<td>$(-\infty,-1.6)$</td>
+<td>0.055</td>
+<td>0.029</td>
+<td>0.017</td>
+<td>0.015</td>
+</tr>
+<tr>
+<td>$(-0.2，0.2)$</td>
+<td>0.158</td>
+<td>0.158</td>
+<td>0.156</td>
+<td>0.156</td>
+</tr>
+<tr>
+<td>$(-1.0,1.0)$</td>
+<td>0.682</td>
+<td>0.682</td>
+<td>0.698</td>
+<td>0.700</td>
+</tr>
+<tr>
+<td>$(1.8,\infty)$</td>
+<td>0.036</td>
+<td>0.062</td>
+<td>0.053</td>
+<td>0.054</td>
+</tr>
+<tr>
+<td>$(2.0,\infty)$</td>
+<td>0.023</td>
+<td>0.047</td>
+<td>0.041</td>
+<td>0.041</td>
+</tr>
+</tbody>
+</table>
+
+	
+
+	
+
+</article>
+
+
+
+
+	<article>
+	
 		<h1><a href="/2018/11/20/Laplace-Approximation/">Laplace Approximation</a></h1>
 	
 	<div class="article__infos">
